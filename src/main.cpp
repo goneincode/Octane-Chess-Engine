@@ -4,20 +4,9 @@
 #include <iomanip>
 #include "Board.h"
 #include "Search.h"
-
-int parseSquare(std::string s) {
-    if (s.length() != 2) return -1;
-    int file = s[0] - 'a';
-    int rank = s[1] - '1';
-    if (file < 0 || file > 7 || rank < 0 || rank > 7) return -1;
-    return rank * 8 + file;
-}
-
-std::string squareToString(int square) {
-    int rank = square / 8;
-    int file = square % 8;
-    return std::string(1, 'a' + file) + std::to_string(rank + 1);
-}
+#include "Utils.h"
+#include "PGNLoader.h"
+#include "UCI.h"
 
 void drawEvalBar(int score) {
     const int width = 40; // Total width of the bar
@@ -51,6 +40,8 @@ void drawEvalBar(int score) {
 int main(int argc, char* argv[]) {
     bool verbose = false;
     bool playComputer = false;
+    bool uciMode = false;
+    std::string pgnFile;
     int computerColor = BLACK; // Default computer plays Black
     
     for (int i = 1; i < argc; ++i) {
@@ -61,6 +52,19 @@ int main(int argc, char* argv[]) {
         if (arg == "--play") {
             playComputer = true;
         }
+        if (arg == "--uci") {
+            uciMode = true;
+        }
+        if (arg == "--pgn" && i + 1 < argc) {
+            pgnFile = argv[i + 1];
+            i++; // Skip next arg
+        }
+    }
+
+    if (uciMode) {
+        UCI uci;
+        uci.loop();
+        return 0;
     }
 
     std::cout << "Octant Engine Started" << std::endl;

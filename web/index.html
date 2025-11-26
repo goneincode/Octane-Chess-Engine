@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Octant Chess</title>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background: #222; color: #eee; }
+        #board { width: 400px; margin: 20px; }
+        #status { margin: 10px; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Octant Chess Engine</h1>
+    <div id="board"></div>
+    <div id="status">White to move</div>
+    <button id="resetBtn">New Game</button>
+
+    <script>
+        var board = null
+        var game = new Chess()
+        var moveHistory = []
+
+        function onDragStart (source, piece, position, orientation) {
+            if (game.game_over()) return false
+            if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+                (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+                return false
+            }
+        }
+
+        function onDrop (source, target) {
+            // see if the move is legal
+            var move = game.move({
+                from: source,
+                to: target,
+                promotion: 'q' // NOTE: always promote to a queen for example simplicity
+            })
+
+            // illegal move
+            if (move === null) return 'snapback'
+
+            updateStatus()
+            moveHistory.push(move.from + move.to + (move.promotion ? move.promotion : ''))
+            
+            // Make computer move
+            window.setTimeout(makeComputerMove, 250)
+        }
+
+        function onSnapEnd () {
+            board.position(game.fen())
+        }
+
+        function updateStatus () {
+            var status = ''
+            var moveColor = 'White'
+            if (game.turn() === 'b') {
+                moveColor = 'Black'
+            }
+
+            if (game.in_checkmate()) {
+                status = 'Game over, ' + moveColor + ' is in checkmate.'
+            } else if (game.in_draw()) {
+                status = 'Game over, drawn position'
+            } else {
+                status = moveColor + ' to move'
+                if (game.in_check()) {
+                    status += ', ' + moveColor + ' is in check'
+                }
+            }
+
+            $('#status').html(status)
+        }
+
+        function makeComputerMove() {
+            $('#status').text('Computer thinking...')
+            
+            $.ajax({
+                url: '/move',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ moves: moveHistory }),
+                success: function(response) {
+                    var bestMove = response.bestmove
+                    if (bestMove) {
+                        var from = bestMove.substring(0, 2)
+                        var to = bestMove.substring(2, 4)
+                        var promotion = bestMove.length > 4 ? bestMove.substring(4, 5) : undefined
+                        
+                        game.move({ from: from, to: to, promotion: promotion })
+                        board.position(game.fen())
+                        moveHistory.push(bestMove)
+                        updateStatus()
+                    }
+                }
+            });
+        }
+
+        var config = {
+            draggable: true,
+            position: 'start',
+            onDragStart: onDragStart,
+            onDrop: onDrop,
+            onSnapEnd: onSnapEnd
+        }
+        board = Chessboard('board', config)
+
+        $('#resetBtn').on('click', function() {
+            game.reset()
+            board.start()
+            moveHistory = []
+            updateStatus()
+        })
+
+        updateStatus()
+    </script>
+</body>
+</html>

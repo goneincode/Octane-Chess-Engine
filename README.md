@@ -36,3 +36,8 @@ To run in analysis mode (two-player / sandbox):
 - **Search**: Depth-limited Alpha-Beta search.
 - **Evaluation**: Material balance + Positional factors (PSTs).
 - **UI**: ASCII board representation with a dynamic evaluation bar.
+
+Educational use only
+
+Made by: goneincode
+With the help of Google Gemini

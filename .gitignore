@@ -1,0 +1,23 @@
+# Build directories
+build/
+bin/
+lib/
+
+# Executables
+Octant
+*.exe
+*.out
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+
+# IDE settings
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
